@@ -1,0 +1,308 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- import CSS -->
+  <link rel="stylesheet" href="static/css/element-ui.css">
+  <link rel="stylesheet" href="static/css/jstree.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <style>
+    [v-cloak] {
+        display: none;
+    }
+</style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <el-row justify="space-around" >
+        <el-col :span="5" id='sidebar'>
+            <el-row>
+                <el-col :span="24" id='monitoring' v-loading="monitoring_loading" >
+                    <div style="font-size: 12px;">
+                        <div>
+                            <span>IP:</span>
+                            <span>${ ip }</span>
+                            <el-button style="margin-left:15px" size="mini" type="text" @click="ipCopy" >复制</el-button>
+                        </div>
+                        <div style="margin-top:5px; display: flex; align-items: center;">
+                            <div>健康状态：</div>
+                            <el-button disabled style="margin-left:10px; padding:5px" :type="health" size="mini" circle></el-button>
+                        </div>
+                        <div style="margin-top:5px">
+                            <span>CPU:</span>
+                            <el-progress :percentage="cpu"></el-progress>
+                        </div>
+                        <div style="margin-top:5px">
+                            <span>内存:</span>
+                            <el-progress :percentage="memory"></el-progress>
+                        </div>
+                        <div style="margin-top:5px">
+                            <span>网络:</span>
+                                <el-table
+                                    :data="netCardTableData"
+                                    size="mini"
+                                    border
+                                    stripe
+                                    :height="table_height"
+                                    style="width: 100%">
+                                    <el-table-column
+                                    prop="net_card"
+                                    label="网卡"
+                                    >
+                                    </el-table-column>
+                                    <el-table-column
+                                    prop="up"
+                                    label="上传"
+                                    >
+                                    </el-table-column>
+                                    <el-table-column
+                                    prop="down"
+                                    label="下载">
+                                    </el-table-column>
+                                </el-table>
+                        </div>    
+                        <div style="margin-top:8px">
+                            <span>硬盘:</span>
+                                <el-table
+                                    :data="devTableData"
+                                    size="mini"
+                                    border
+                                    stripe
+                                    :height="table_height"
+                                    style="width: 100%">
+                                    <el-table-column
+                                    prop="dev"
+                                    label="设备"
+                                    >
+                                    </el-table-column>
+                                    <el-table-column
+                                    prop="num"
+                                    label="总/耗"
+                                    >
+                                    </el-table-column>
+                                    <el-table-column
+                                    prop="use"
+                                    label="使用">
+                                    </el-table-column>
+                                </el-table>
+                        </div>    
+                    </div>
+                </el-col>
+                <el-col :span="24" id='menu'>
+                    <div>
+                        <el-menu
+                        class="el-menu-vertical-demo">
+                        <el-submenu index="1">
+                            <template slot="title">
+                            <svg style="margin-left:3px; margin-right: 10px;" t="1736308405035" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4244" width="16" height="16"><path d="M85.333333 42.666667h853.333334a42.666667 42.666667 0 0 1 42.666666 42.666666v170.666667a42.666667 42.666667 0 0 1-42.666666 42.666667H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666667V85.333333a42.666667 42.666667 0 0 1 42.666666-42.666666z m0 341.333333h853.333334a42.666667 42.666667 0 0 1 42.666666 42.666667v170.666666a42.666667 42.666667 0 0 1-42.666666 42.666667H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666667v-170.666666a42.666667 42.666667 0 0 1 42.666666-42.666667z m0 341.333333h853.333334a42.666667 42.666667 0 0 1 42.666666 42.666667v170.666667a42.666667 42.666667 0 0 1-42.666666 42.666666H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666666v-170.666667a42.666667 42.666667 0 0 1 42.666666-42.666667zM85.333333 85.333333v170.666667h853.333334V85.333333H85.333333z m0 341.333334v170.666666h853.333334v-170.666666H85.333333z m0 341.333333v170.666667h853.333334v-170.666667H85.333333z m128-213.333333a42.666667 42.666667 0 1 1 0-85.333334 42.666667 42.666667 0 0 1 0 85.333334z m0-341.333334a42.666667 42.666667 0 1 1 0-85.333333 42.666667 42.666667 0 0 1 0 85.333333z" fill="#707070" p-id="4245"></path></svg>
+                            <span>服务器操作</span>
+                            </template>
+                            <el-menu-item-group>
+                            <el-menu-item index="1-1" @click="serverManagementDrawer = true">服务器列表</el-menu-item>
+                            <el-menu-item index="1-2">认证方式</el-menu-item>
+                            </el-menu-item-group>
+                        </el-submenu>
+                        <el-menu-item index="2">
+                            <i class="el-icon-menu"></i>
+                            <span slot="title">待开发</span>
+                        </el-menu-item>
+                        <el-menu-item index="4">
+                            <i class="el-icon-setting"></i>
+                            <span slot="title">待开发</span>
+                        </el-menu-item>
+                        </el-menu>
+
+                    </div>
+                </el-col>
+            </el-row>
+        </el-col>
+        
+        
+        <el-col :span="19" id='main'>
+            <div class="tab-container">
+                <el-tabs  id="ServerConnetcTab" v-model="editableTabsValue" type="card" editable @edit="handleTabsEdit" @tab-click="optionReplacement">
+                    <el-tab-pane
+                      :key="item.name"
+                      v-for="(item, index) in editableTabs"
+                      :label="item.title"
+                      :name="item.name"
+                      :lazy="true"
+                      :server-id="item.id"
+                    >
+                    <keep-alive>
+                        <div v-html="item.content"></div>
+                    </keep-alive>
+                    </el-tab-pane>
+                  </el-tabs>
+            </div>
+
+        </el-col>
+    </el-row>
+
+    <el-drawer
+        title="服务器管理"
+        :visible.sync="serverManagementDrawer"
+        :with-header="true"
+        size="40%">
+        <div>
+         <el-button size="mini" type="primary" style="margin-left:15px;margin-bottom:10px" @click="dialogAddServerFormVisible = true">添加服务器</el-button>   
+         <el-button size="mini" type="primary" @click="dialogAddGroupFormVisible = true">添加组</el-button>
+        <hr>
+        <el-tree
+            id="serverListTree"
+            style="margin-top:18px;"
+            :data="serverListData"
+            node-key="id"
+            ref="tree"
+            highlight-current
+            draggable
+            @node-contextmenu="handleNodeContextmenu"
+            @node-click="connectedServer"
+            :props="defaultProps">
+        </el-tree>
+        </div>
+    </el-drawer>
+
+    <el-drawer
+    title="文件传输"
+    :visible.sync="sftpDrawer"
+    :with-header="true"
+    append-to-body
+    size="50%">
+    <div>
+     <div id='sftp'>
+            <el-row >
+                <el-col :span="24" style="height: 10vh">
+                    <el-button-group style="margin-left:8px; margin-right:8px">
+                        <el-button @click="sftpBack" type="primary" icon="el-icon-arrow-left" size="mini"></el-button>
+                    </el-button-group>
+                    <el-input v-model='sftp_input_data' @change="changeServerDir" size=mini style="width:50%; margin-left:8px; margin-right:8px"></el-input>
+                    <el-button @click="locateToDir" type="text" icon="el-icon-location-information" size="medium"></el-button>
+                </el-col>
+                
+                <el-col :span="24" style="height: 79vh;">
+                    <el-table
+                    v-loading="sftp_loading"
+                    :data="current_path_data"
+                    height="100%"
+                    style="width: 100%"
+                    @row-dblclick="sftpTableRowDbClick"
+                    @row-contextmenu="sftpTableRowContextmenu"
+                    >
+                    <el-table-column
+                        label="名称"
+                        width="180">
+                        <template slot-scope="scope">
+                            <i :class="['common-class', getIconClass(scope.row.type)]"></i>
+                            <span style="margin-left: 10px">${ scope.row.name }</span>
+                          </template>
+                    </el-table-column>
+                    <el-table-column
+                        prop="time"
+                        label="修改日期"
+                        width="180">
+                    </el-table-column>
+                    <el-table-column
+                        prop="size"
+                        label="大小">
+                    </el-table-column>
+                    </el-table>
+                </el-col>
+        </div>
+    </div>
+    </el-drawer>
+
+    <!--传输列表-->
+    <el-drawer
+        title="传输任务"
+        :visible.sync="transmit"
+        @open="transmitOpen"
+        @close="transmitClose"
+        >
+        <div v-loading="sftp_task_loading" style="height:88vh;">
+            <el-card v-for="task in sftp_task" :key="task.id" style="margin: 10px; with:90%;">
+                <div slot="header" style="height: 15px">
+                    <span style="font-size:12px; " >[${ task.name }]${ task.ip }</span>
+                    <el-button type="danger" style="float: right; padding: 3px 3px; margin-top: 5px" icon="el-icon-delete" size="mini" circle @click="cancelSftpTasks(task.id)"></el-button>
+                  </div>
+                <div style="font-size:10px; ">
+                    <span> <span style="font-size:11px; color:#000000; font-weight: bold;">${ task.type }:</span> ${ task.remote_path } => ${ task.local_path } </span> 
+                    <span style="display: inline-block; width: 100%; text-align: left;margin-top:3px;"><span style="font-size:11px; color:#000000; font-weight: bold;">大小:</span> ${ task.size } </span> 
+                </div>
+                    <div v-if="task.status == 'success'" style="color: #00fa15; font-size:12px; text-align: right;"> 完成 </div>
+                    <el-progress v-else :percentage="task.progress" color="#1989fa"></el-progress>
+            </el-card>
+        </div>
+    </el-drawer>
+
+    <!--添加服务器对话框-->
+    <el-dialog title="添加组" :visible.sync="dialogAddGroupFormVisible" width="40%">
+        <el-form :model="addGroupForm">
+          <el-form-item label="组名称">
+            <el-input v-model="addGroupForm.name" autocomplete="off"></el-input>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogAddGroupFormVisible = false">取 消</el-button>
+          <el-button type="primary" @click="addGroup">确 定</el-button>
+        </div>
+      </el-dialog>
+
+      
+
+    <!--添加服务器对话框-->
+    <el-dialog title="添加服务器" :visible.sync="dialogAddServerFormVisible" width="40%" top="5vh">
+        <el-form :model="addServerForm" :rules="rules" :inline="true" label-position="right" label-width="100px">
+            <el-form-item label="名称"  prop="name">
+                <el-input size="mini" v-model="addServerForm.name" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="IP"  prop="ip">
+                <el-input size="mini" v-model="addServerForm.ip" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="端口"  prop="port">
+                <el-input size="mini" v-model="addServerForm.port" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="用户名"  prop="username">
+                <el-input size="mini" v-model="addServerForm.username" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="密码">
+                <el-input size="mini" v-model="addServerForm.password" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="秘钥">
+                <el-input size="mini" style='width:69%;' @blur="getKey" type='file' v-model="addServerForm.key" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="秘钥密码">
+                <el-input size="mini" v-model="addServerForm.passphrase" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="组" label-position="top"  prop="group_id">
+                <el-select size="mini" style='width:92%;' v-model="addServerForm.group_id" placeholder="请选择所在组">
+                    <el-option
+                      v-for="item in serverListData"
+                      :key="item.id"
+                      :label="item.label"
+                      :value="item.id">
+                    </el-option>
+                  </el-select>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="cancelAddServer">取 消</el-button>
+            <el-button type="primary" @click="addServer">确 定</el-button>
+        </div>
+    </el-dialog>
+
+    
+
+  </div>
+</body>
+<script src="static/js/vue.js"></script>
+<!-- 引入外部脚本 -->
+<script src="static/js/contextmenu.umd.js"></script>
+<script src="static/js/Sortable.min.js"></script>
+<script src="static/js/element-ui.js"></script>
+<script src="static/js/axios.min.js"></script>
+<script src="static/js/jquery.min.js"></script>
+<script src="static/js/index.js"></script>
+</html>
+

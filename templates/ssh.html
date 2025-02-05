@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<head>
+    <title>Web SSH</title>
+    <link rel="stylesheet" href="static/css/xterm.min.css">
+    <script src="static/js/xterm.min.js"></script>
+    <script src="static/js/xterm-addon-fit.min.js"></script>
+    <script src="static/js/xterm-addon-web-links.min.js"></script>
+    <script src="static/js/axios.min.js"></script>
+    <style>
+        body {
+            padding: 0;
+            overflow: hidden;
+        }
+        #terminal {
+            width: 100vw;
+            height: 99vh;
+        }
+    </style>
+</head>
+<body>
+<div id="terminal"></div>
+
+<script>
+    // 从内联脚本获取用户信息并解析为对象
+    const ssh_info = JSON.parse('{{ ssh_info|tojson|safe }}');
+
+    const theme_style = {
+        theme: {
+            background: '#000000', // 黑色背景
+            foreground: '#ffffff', // 白色文本
+            cursor: '#6bf996',       // 闪烁光标
+            black: '#3F3F3F',
+            red: '#CC9393',
+            green: '#7F9F7F',
+            yellow: '#F0DFAF',
+            blue: '#DECF3F',
+            magenta: '#DFAFDF',
+            cyan: '#5FCF80',
+            white: '#DCDCCC',
+            brightBlack: '#5F5A60',
+            brightRed: '#DCA3A3',
+            brightGreen: '#29e65f',
+            brightYellow: '#F0F0A0',
+            brightBlue: '#58b2d6',
+            brightMagenta: '#EFAFDF',
+            brightCyan: '#93E0E3',
+            brightWhite: '#FFFFFF',
+        },
+        letterSpacing: 0.9,
+        fontSize: 14,
+        fontFamily: 'monospace, "Courier New", Courier, monospace',
+        allowTransparency: true, // 允许透明背景
+        cursorBlink: true, // 光标闪烁
+        disableStdin: false, // 确保不禁用标准输入
+    };
+
+    const term = new Terminal(theme_style);
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById('terminal'));
+    term.focus();
+
+    setTimeout(() => {
+        fitAddon.fit();
+    },100)
+
+    let socket;
+    let reconnectInterval = 1000; // 初始重连间隔时间（1秒）
+    const maxReconnectAttempts = 10; // 最大重连次数
+    let reconnectAttempts = 0;
+
+    function connectWebSocket() {
+        socket = new WebSocket('ws://localhost:6789');
+
+        socket.onopen = () => {
+            console.log('WebSocket 连接已打开');
+            reconnectAttempts = 0; // 重置重连次数
+
+            const sshParams = {
+                ssh_host: ssh_info.host,
+                ssh_port: ssh_info.port,
+                ssh_username: ssh_info.username,
+                ssh_password: ssh_info.password,
+                ssh_key_content: ssh_info.key,
+                ssh_key_password: ssh_info.key_passphrase,
+                ssh_width: term.cols,
+                ssh_height: term.rows - 1
+            };
+            socket.send(JSON.stringify(sshParams));
+            socket.send(JSON.stringify({
+                width: term.cols,
+                height: term.rows - 1
+            }));
+        };
+
+        socket.onmessage = function(event) {
+            term.write(event.data,() => {
+                term.scrollToBottom();
+            });
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket 错误:', error);
+            // 关闭连接并尝试重连
+            socket.close();
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket 连接已关闭');
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                console.log(`尝试重新连接... (${reconnectAttempts}/${maxReconnectAttempts})`);
+                axios.get('/ws_restart').then(() => {
+                    if (response.data.status === 'success')
+                        console.log('重启websocket服务')
+                });
+                setTimeout(connectWebSocket, reconnectInterval);
+                // 增加重连间隔时间
+                reconnectInterval *= 2;
+            } else {
+                console.error('达到最大重连次数，停止重连');
+            }
+        };
+    }
+
+    // 防抖函数实现
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
+    // 使用防抖函数来控制发送频率
+    const sendResize = debounce(() => {
+        fitAddon.fit();
+        var width = term.cols;
+        var height = term.rows;
+        console.log(`调整终端大小为 ${width}x${height}`);
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                width: width,
+                height: height - 1
+            }));
+        }
+    }, 500); // 500 毫秒的防抖时间
+
+    // 如果你需要在窗口大小改变时也调整终端大小，可以监听窗口的 resize 事件
+    window.addEventListener('resize', sendResize);
+
+    setTimeout(() => {
+        sendResize();
+    }, 1000);
+
+    // 绑定终端输入事件
+    term.onData(function(data) {
+        if (data) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(data);
+            } else {
+                console.error('WebSocket 未连接，无法发送数据');
+            }
+        }
+    });
+
+
+    // 初始化 WebSocket 连接
+    connectWebSocket();
+</script>
+</body>
+</html>
